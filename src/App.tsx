@@ -1,32 +1,175 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
-import { ageEncrypt, ageGenerateX25519Identity } from "./worker";
+import { ageDecrypt, ageEncrypt, ageGenerateX25519Identity } from "./worker";
 
 (global as any).ageEncrypt = ageEncrypt;
+(global as any).ageDecrypt = ageDecrypt;
 (global as any).ageGenerateX25519Identity = ageGenerateX25519Identity;
 
+const Heading: React.FC<{ size: "large" | "medium" | "small" }> = ({
+  size,
+  children,
+}) => {
+  const universalClasses = "";
+  switch (size) {
+    case "large":
+      return (
+        <h1 className={`text-3xl mb-4 ${universalClasses}`}>{children}</h1>
+      );
+    case "medium":
+      return <h2 className={`text-lg mb-3 ${universalClasses}`}>{children}</h2>;
+    case "small":
+      return <h3 className={`text-md mb-2 ${universalClasses}`}>{children}</h3>;
+  }
+  throw new Error(`invalid heading size: ${size}`);
+};
+
+const ResultDiplay: React.FC<React.HTMLAttributes<HTMLPreElement>> = (
+  props
+) => (
+  <pre
+    className="text-xs mt-3 p-3 bg-gray-200 rounded shadow-inner overflow-scroll"
+    {...props}
+  ></pre>
+);
+
 const ExtraSmall: React.FC<React.HTMLAttributes<HTMLElement>> = (props) => (
-  <small style={{ fontSize: "0.6em" }} {...props}></small>
+  <small className="text-xs" {...props}></small>
 );
 
 const Link: React.FC<React.AnchorHTMLAttributes<HTMLAnchorElement>> = ({
   children,
   href,
+  className,
   ...rest
 }) => {
+  const style: React.CSSProperties = {};
+  if (!href) {
+    style.cursor = "pointer";
+  }
   return (
-    <a href={href} rel="noreferrer nofollow noopener" {...rest}>
+    <a
+      className={className || `text-blue-600 visited:text-purple-600`}
+      href={href}
+      style={style}
+      rel="noreferrer nofollow noopener"
+      {...rest}
+    >
       {children}
     </a>
   );
+};
+
+function evaluate(v: boolean | (() => boolean)): boolean {
+  if (typeof v === "function") {
+    return v();
+  }
+  return v;
+}
+
+const classNames = (
+  options: Record<string, (() => boolean) | boolean>
+): string => {
+  var result: string[] = [];
+  for (let klass in options) {
+    const v = options[klass];
+    if (evaluate(v)) {
+      result.push(klass);
+    }
+  }
+  return result.join(" ");
+};
+
+const InlineRadioButtonGroup: React.FC<{
+  onChange: (selection: string) => any;
+  selected: string;
+  options: Array<{
+    id: string;
+    label: string;
+  }>;
+}> = (props) => {
+  if (props.options.length === 0) {
+    return <></>;
+  }
+  return (
+    <div className="flex">
+      {props.options.map((o, idx) => {
+        const isFirst = idx === 0;
+        const isLast = idx === props.options.length - 1;
+        const isSelected = o.id === props.selected;
+        return (
+          <button
+            key={idx}
+            onClick={() => {
+              props.onChange(o.id);
+            }}
+            className={classNames({
+              rounded: isFirst && isLast,
+              "rounded-l": isFirst && !isLast,
+              "rounded-r": isLast && !isFirst,
+              "bg-gray-500": !isSelected,
+              "bg-gray-700": isSelected,
+              "text-white": true,
+              "py-2": true,
+              "px-3": true,
+            })}
+          >
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
+const ConfirmButton: React.FC<{
+  defaultText: string;
+  confirmText: string;
+  onConfirm: () => any;
+}> = (props) => {
+  enum Step {
+    DEFAULT = 0,
+    LAST_CHANCE = 1,
+  }
+  const [step, setStep] = useState<Step>(Step.DEFAULT);
+  switch (step) {
+    case Step.DEFAULT:
+      return (
+        <Link
+          onClick={() => {
+            setStep(Step.LAST_CHANCE);
+          }}
+        >
+          {props.defaultText}
+        </Link>
+      );
+    case Step.LAST_CHANCE:
+      return (
+        <Link
+          className="text-red-500"
+          onClick={() => {
+            setStep(Step.DEFAULT);
+            props.onConfirm();
+          }}
+        >
+          {props.confirmText}
+        </Link>
+      );
+  }
+  throw new Error("unreachable");
 };
 
 const getKeyLink = (key: string): string => {
   return `https://age-online.com/?r=${key}`;
 };
 
+type KeyPair = {
+  public: string;
+  private: string;
+};
+
 function App() {
-  const [gsOpen, setGsOpen] = useState(!!sessionStorage.getItem("gs_open"));
+  const [mode, setMode] = useState<"enc" | "dec">("enc");
   const [pubKey, setPubKey] = useState<string[] | string>(() => {
     const params = new URLSearchParams(global.location.search);
     if (params.has("r")) {
@@ -34,141 +177,177 @@ function App() {
     }
     return "";
   });
+  const [privKey, setPrivKey] = useState<string | null>(null);
   const [plaintext, setPlaintext] = useState("");
   const [ciphertext, setCiphertext] = useState("");
-  // useEffect(() => {
-  //   ageGenerateX25519Identity().then(([, newPubKey]) => {
-  //     setPubKey(newPubKey);
-  //   });
-  // }, []);
+
   useEffect(() => {
+    if (mode === "dec" && ciphertext.charAt(0) === "<") {
+      setCiphertext("");
+    }
+    if (mode === "enc" && plaintext.charAt(0) === "<") {
+      setPlaintext("");
+    }
+  }, [mode]);
+
+  const pubKeys = (() => {
+    if (pubKey) {
+      if (Array.isArray(pubKey)) {
+        return pubKey;
+      }
+      return [pubKey];
+    }
+    return [];
+  })();
+
+  useEffect(() => {
+    if (mode === "enc") {
+      return;
+    }
+    if (!privKey) {
+      setMode("enc");
+      return;
+    }
+    if (ciphertext === "") {
+      setPlaintext("<nothing to decrypt>");
+      return;
+    }
+    ageDecrypt(ciphertext, privKey)
+      .then((pt) => {
+        setPlaintext(pt);
+      })
+      .catch((e) => {
+        setPlaintext(`ERROR: ${`${e}`.replace(/^(\s*error\s*:\s*)+/gi, "")}`);
+      });
+  }, [ciphertext, privKey, mode]);
+
+  // encrypting effect
+  useEffect(() => {
+    if (mode === "dec") {
+      return;
+    }
     if (plaintext === "") {
       setCiphertext("<nothing to encrypt>");
       return;
     }
-    if (!pubKey) {
+    if (pubKeys.length === 0) {
       setCiphertext("<no public key entered>");
       return;
     }
-    ageEncrypt(plaintext, Array.isArray(pubKey) ? pubKey : [pubKey])
+    ageEncrypt(plaintext, pubKeys)
       .then((ct) => {
         setCiphertext(ct);
       })
       .catch((e) => {
-        // lol, trim the repeated "error: " prefix
-        var errmsg = `${e}`;
-        var cb = 0;
-        while (/^\s*error\s*:\s*/i.test(errmsg)) {
-          cb++;
-          // circuit breaker
-          if (cb > 100) {
-            break;
-          }
-          errmsg = errmsg.replace(/^\s*error\s*:\s*/i, "");
-        }
-        setCiphertext(`ERROR: ${errmsg}`);
+        setCiphertext(`ERROR: ${`${e}`.replace(/^(\s*error\s*:\s*)+/gi, "")}`);
       });
-  }, [plaintext, pubKey]);
+  }, [plaintext, pubKey, mode]);
+
   const isPrefilledKey = Array.isArray(pubKey);
+  const [pubKeyValue, pubKeyDisabled] = ((): [string, boolean] => {
+    if (isPrefilledKey) {
+      if (pubKey.length > 1) {
+        return ["<multiple>", true];
+      }
+      return [pubKey[0], true];
+    }
+    return [pubKey, false];
+  })();
   return (
-    <div style={{ padding: "2rem" }}>
-      <div id="header">
-        <h2>
+    <div className="p-8 max-w-screen-sm">
+      <div id="header" className="pb-8">
+        <Heading size="large">
           <Link href="https://age-encryption.org" target="_blank">
             age
           </Link>{" "}
           online encrypter
-        </h2>
+        </Heading>
         <p>easily pass around secure data with age</p>
         <ExtraSmall>
           (everything is in-browser, powered by WASM, data does not go ANYWHERE)
         </ExtraSmall>
-        <small style={{ fontSize: "0.6rem" }}></small>
-      </div>
-      <div id="getting-started" style={{ maxWidth: "400px" }}>
-        <h4>
-          <a
-            title="open for tips"
-            style={{ cursor: "pointer" }}
-            onClick={() => {
-              if (gsOpen) {
-                sessionStorage.removeItem("gs_open");
-                setGsOpen(false);
-              } else {
-                sessionStorage.setItem("gs_open", "1");
-                setGsOpen(true);
-              }
-            }}
-          >
-            {gsOpen ? <>&#9660;</> : <>&#9654;</>}
-          </a>{" "}
-          getting started
-        </h4>
-        {gsOpen && (
-          <>
-            <ol>
-              <li>
-                <b>install age:</b>{" "}
-                <Link
-                  target="_blank"
-                  href="https://github.com/FiloSottile/age#installation"
-                >
-                  go here
-                </Link>{" "}
-                to get age on your computer
-              </li>
-              <li>
-                <b>generate a private key:</b>
-                <pre>
-                  $ age-keygen -o key.txt
-                  <br />
-                  Public key:
-                  age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p
-                </pre>
-                <p>
-                  this will write your <i>private</i> key which you will need to
-                  decrypt what this page generates.
-                </p>
-              </li>
-              <li>
-                <b>copy the public key here:</b> the previous command printed
-                out the public key (begins with "age1"). copy-paste that into
-                the "public key" text box below.
-              </li>
-            </ol>
-          </>
-        )}
       </div>
       <div id="age-key">
-        <h4>enter a public key:</h4>
-        <input
-          type="text"
-          disabled={isPrefilledKey}
-          style={{ padding: "1em", width: "500px" }}
-          value={
-            isPrefilledKey
-              ? pubKey.length === 1
-                ? pubKey[0]
-                : "<multiple>"
-              : pubKey
-          }
-          onChange={(e) => {
-            setPubKey(e.target.value);
-          }}
-        />
+        <Heading size="small">public key:</Heading>
+        <div>
+          <input
+            type="text"
+            className="border border-gray-400 rounded-sm text-sm p-2"
+            style={{ width: "510px" }}
+            spellCheck={false}
+            autoComplete="off"
+            disabled={pubKeyDisabled}
+            value={pubKeyValue}
+            onChange={(e) => {
+              setPubKey(e.target.value);
+            }}
+          />
+        </div>
         <div>
           <br />
           {!isPrefilledKey && (
             <>
-              <small>
-                input a public key (should start with <b>age1</b>)
-              </small>
+              {pubKeys.length === 0 && (
+                <div>
+                  <div>
+                    <small>
+                      input a public key (should start with <b>age1</b>).
+                    </small>
+                  </div>
+                  <div>
+                    <b>OR</b>
+                  </div>
+                  <div>
+                    {!privKey && (
+                      <small>
+                        <Link
+                          onClick={() => {
+                            ageGenerateX25519Identity().then((pair) => {
+                              var newkp: KeyPair = {
+                                public: pair[1],
+                                private: pair[0],
+                              };
+                              setPubKey(newkp.public);
+                              setPrivKey(newkp.private);
+                            });
+                          }}
+                        >
+                          generate public/private key pair
+                        </Link>
+                      </small>
+                    )}
+                  </div>
+                </div>
+              )}
+              {!!privKey && (
+                <small>
+                  <ConfirmButton
+                    defaultText="destroy key"
+                    confirmText="are you sure you want to destroy the keypair? any encrypted data will be lost!"
+                    onConfirm={() => {
+                      setPubKey("");
+                      setPrivKey(null);
+                    }}
+                  />
+                </small>
+              )}
               {pubKey && (
                 <>
                   <br />
                   <ExtraSmall>
-                    send a link with your key:{" "}
-                    <Link href={getKeyLink(pubKey)}>{getKeyLink(pubKey)}</Link>
+                    send a link with your public key:
+                    <br />
+                    <input
+                      className="border border-gray-400 rounded-sm text-xs p-2"
+                      value={getKeyLink(pubKey)}
+                      readOnly={true}
+                      onClick={(e) => {
+                        // console
+                        (e.target as any).focus();
+                        (e.target as any).select();
+                      }}
+                      style={{ width: "500px" }}
+                    />
                   </ExtraSmall>
                 </>
               )}
@@ -176,29 +355,73 @@ function App() {
           )}
           {isPrefilledKey && (
             <ExtraSmall>
-              key set by url. <a href="/">unset key</a>
+              key set by url. <Link href="/">unset key</Link>
             </ExtraSmall>
           )}
         </div>
       </div>
-      <div id="age-encryptor">
-        <h4>encrypt stuff</h4>
-        <p>
-          enter some text below to have it encrypted with the above public
-          <br />
-          key:
-        </p>
-        <textarea
-          value={plaintext}
-          rows={15}
-          cols={50}
-          onChange={(e) => {
-            setPlaintext(e.target.value);
+      <hr className="my-8" />
+      {privKey && (
+        <InlineRadioButtonGroup
+          onChange={(selection) => {
+            setCiphertext("");
+            setPlaintext("");
+            setMode(selection as any);
           }}
-        ></textarea>
-        <p>below is the encrypted version of the input above:</p>
-        <pre>{ciphertext}</pre>
+          selected={mode}
+          options={[
+            { id: "enc", label: "encrypt" },
+            { id: "dec", label: "decrypt" },
+          ]}
+        />
+      )}
+      <div className="mt-4">
+        {mode === "dec" && (
+          <div id="age-decrypter">
+            <Heading size="medium">decrypt stuff</Heading>
+            <p>
+              enter some text below to have it decrypted with the generated
+              private key:
+            </p>
+            <textarea
+              className="border border-gray-400 rounded-sm text-sm p-2 mt-1 font-mono	"
+              value={ciphertext}
+              rows={15}
+              cols={64}
+              onChange={(e) => {
+                setCiphertext(e.target.value);
+              }}
+            ></textarea>
+            <p className="mt-3">
+              below is the decrypted version of the input above:
+            </p>
+            <ResultDiplay>{plaintext}</ResultDiplay>
+          </div>
+        )}
+        {mode === "enc" && (
+          <div id="age-encrypter">
+            <Heading size="medium">encrypt stuff</Heading>
+            <p>
+              enter some text below to have it encrypted with the above public
+              key:
+            </p>
+            <textarea
+              className="border border-gray-400 rounded-sm text-sm p-2 mt-1"
+              value={plaintext}
+              rows={15}
+              cols={50}
+              onChange={(e) => {
+                setPlaintext(e.target.value);
+              }}
+            ></textarea>
+            <p className="mt-3">
+              below is the encrypted version of the input above:
+            </p>
+            <ResultDiplay>{ciphertext}</ResultDiplay>
+          </div>
+        )}
       </div>
+      <hr className="my-8" />
       <div id="links">
         <ExtraSmall>
           <Link href="https://github.com/nkcmr/age-online" target="_blank">

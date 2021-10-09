@@ -5,7 +5,7 @@ a fully in-browser tool to encrypt data with [age](https://age-encryption.org/).
 ## TODO
 
 - [x] MVP: encrypting data
-- [ ] decrypting data
+- [x] decrypting data
 - [ ] make it pretty
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).

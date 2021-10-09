@@ -64,6 +64,21 @@ self.addEventListener("message", function (event) {
           self.postMessage({ error: new Error(`${err}`) });
         });
       break;
+    case "age_decrypt":
+      wasmReady
+        .then(function () {
+          return age_decrypt(event.data.args[0], event.data.args[1]);
+        })
+        .then(function (plainText) {
+          self.postMessage({ result: plainText });
+        })
+        .catch((err) => {
+          self.postMessage({ error: new Error(`${err}`) });
+        });
+      break;
     default:
+      self.postMessage({
+        error: new Error(`unknown operation: ${event.data.op}`),
+      });
   }
 });

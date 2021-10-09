@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"strings"
 	"syscall/js"
 
@@ -10,7 +11,7 @@ import (
 	"filippo.io/age/armor"
 )
 
-func promise(fn func(func(js.Value), func(js.Value))) js.Value {
+func promise(fn func(resolve func(js.Value), reject func(js.Value))) js.Value {
 	var handler js.Func
 	handler = js.FuncOf(func(_ js.Value, args []js.Value) interface{} {
 		resolve, reject := args[0], args[1]
@@ -88,6 +89,43 @@ func main() {
 					a := js.Global().Get("Array").New()
 					a.Call("push", js.ValueOf(id.String()), js.ValueOf(id.Recipient().String()))
 					resolve(a)
+				}()
+			},
+		)
+	}))
+	js.Global().Set("age_decrypt", js.FuncOf(func(_ js.Value, args []js.Value) interface{} {
+		return promise(
+			func(resolve, reject func(js.Value)) {
+				go func() {
+					if len(args) != 2 {
+						reject(jsError(fmt.Errorf("expected 2 arguments, got %d", len(args))))
+						return
+					} else if t := args[0].Type(); t != js.TypeString {
+						reject(jsError(fmt.Errorf("expected argument 1 to be a string, got %s", t.String())))
+						return
+					} else if t := args[1].Type(); t != js.TypeString {
+						reject(jsError(fmt.Errorf("expected argument 2 to be a string, got %s", t.String())))
+						return
+					}
+					armortxt := strings.NewReader(args[0].String())
+					id, err := age.ParseX25519Identity(args[1].String())
+					if err != nil {
+						reject(jsError(fmt.Errorf("failed to parse private key: %s", err.Error())))
+						return
+					}
+					ar := armor.NewReader(armortxt)
+					ptr, err := age.Decrypt(ar, id)
+					if err != nil {
+						reject(jsError(fmt.Errorf("failed to decrypt text: %s", err.Error())))
+						return
+					}
+					ptbytes, err := io.ReadAll(ptr)
+					if err != nil {
+						reject(jsError(fmt.Errorf("failed to read decrypted text: %s", err.Error())))
+						return
+					}
+					resolve(js.ValueOf(string(ptbytes)))
+					return
 				}()
 			},
 		)

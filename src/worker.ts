@@ -86,3 +86,13 @@ export function ageEncrypt(
     args: [plaintext, recipients],
   });
 }
+
+export function ageDecrypt(
+  ciphertext: string,
+  privateKey: string
+): Promise<string> {
+  return messageQueue({
+    op: "age_decrypt",
+    args: [ciphertext, privateKey],
+  });
+}
