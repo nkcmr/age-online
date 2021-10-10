@@ -168,7 +168,23 @@ type KeyPair = {
   private: string;
 };
 
+const InfoCard: React.FC<{}> = ({ children }) => (
+  <div className="mb-4 p-2 border-blue-300 border rounded bg-blue-100 text-sm">
+    {children}
+  </div>
+);
+
+const InlineCode: React.FC<{}> = ({ children }) => (
+  <code className="text-xs bg-gray-100 p-1 rounded-sm border border-gray-300">
+    {children}
+  </code>
+);
+
 function App() {
+  const [recieveMode] = useState(() => {
+    const params = new URLSearchParams(global.location.search);
+    return params.has("receive_mode");
+  });
   const [mode, setMode] = useState<"enc" | "dec">("enc");
   const [pubKey, setPubKey] = useState<string[] | string>(() => {
     const params = new URLSearchParams(global.location.search);
@@ -180,6 +196,25 @@ function App() {
   const [privKey, setPrivKey] = useState<string | null>(null);
   const [plaintext, setPlaintext] = useState("");
   const [ciphertext, setCiphertext] = useState("");
+
+  useEffect(() => {
+    // receive mode will:
+    // - auto-generate a keypair
+    // - set to "dec" mode
+    // - cause a few helpful messages to show up
+    if (!recieveMode) {
+      return;
+    }
+    ageGenerateX25519Identity().then((pair) => {
+      var newkp: KeyPair = {
+        public: pair[1],
+        private: pair[0],
+      };
+      setPubKey(newkp.public);
+      setPrivKey(newkp.private);
+      setMode("dec");
+    });
+  }, [recieveMode]);
 
   useEffect(() => {
     if (mode === "dec" && ciphertext.charAt(0) === "<") {
@@ -267,6 +302,12 @@ function App() {
           (everything is in-browser, powered by WASM, data does not go ANYWHERE)
         </ExtraSmall>
       </div>
+      {recieveMode && (
+        <InfoCard>
+          👋 Hello, someone is trying to send you secure text. There are some
+          instructions on how to receive that and decrypt it below.
+        </InfoCard>
+      )}
       <div id="age-key">
         <Heading size="small">public key:</Heading>
         <div>
@@ -349,6 +390,11 @@ function App() {
                       style={{ width: "500px" }}
                     />
                   </ExtraSmall>
+                  <div className="mb-2"></div>
+                  <InfoCard>
+                    <b>1.</b>&nbsp;Copy the above (☝️) link and send it to the
+                    person that sent you here.
+                  </InfoCard>
                 </>
               )}
             </>
@@ -378,6 +424,11 @@ function App() {
       <div className="mt-4">
         {mode === "dec" && (
           <div id="age-decrypter">
+            <InfoCard>
+              <b>2.</b>&nbsp;Paste the text they sent (should start with{" "}
+              <InlineCode>BEGIN AGE</InlineCode>) here. The decrypted message
+              will be output below.
+            </InfoCard>
             <Heading size="medium">decrypt stuff</Heading>
             <p>
               enter some text below to have it decrypted with the generated
@@ -386,6 +437,8 @@ function App() {
             <textarea
               className="border border-gray-400 rounded-sm text-sm p-2 mt-1 font-mono	"
               value={ciphertext}
+              spellCheck="false"
+              autoComplete="off"
               rows={15}
               cols={64}
               onChange={(e) => {
@@ -420,6 +473,23 @@ function App() {
             <ResultDiplay>{ciphertext}</ResultDiplay>
           </div>
         )}
+      </div>
+      <hr className="my-8" />
+      <div id="useful-options">
+        <Heading size="medium">useful options</Heading>
+        <p className="text-sm mb-3">
+          The <InlineCode>?r=age1...</InlineCode> query parameter can be set to
+          an age public key to make a link that will pre-fill the public key
+          text box make it easy to receive encrypted material. The parameter can
+          also be repeated to encrypt for multiple recipients.
+        </p>
+        <p className="text-sm">
+          The <InlineCode>?receive_mode=1</InlineCode> query parameter can be
+          set and sent as a link to someone so they can have this page set up to
+          automatically generate a key and put in decrypt mode, making it easy
+          to send encrypted material to someone.
+        </p>
+        <ExtraSmall></ExtraSmall>
       </div>
       <hr className="my-8" />
       <div id="links">
