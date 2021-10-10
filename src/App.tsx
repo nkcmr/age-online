@@ -286,7 +286,7 @@ function App() {
       }
       return [pubKey[0], true];
     }
-    return [pubKey, false];
+    return [pubKey, !!privKey];
   })();
   return (
     <div className="p-8 max-w-screen-sm">
@@ -313,7 +313,10 @@ function App() {
         <div>
           <input
             type="text"
-            className="border border-gray-400 rounded-sm text-sm p-2"
+            className={classNames({
+              "border border-gray-400 rounded-sm text-sm p-2": true,
+              "bg-gray-200": pubKeyDisabled,
+            })}
             style={{ width: "510px" }}
             spellCheck={false}
             autoComplete="off"
