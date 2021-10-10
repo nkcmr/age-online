@@ -395,10 +395,12 @@ function App() {
                     />
                   </ExtraSmall>
                   <div className="mb-2"></div>
-                  <InfoCard>
-                    <b>1.</b>&nbsp;Copy the above (☝️) link and send it to the
-                    person that sent you here.
-                  </InfoCard>
+                  {recieveMode && (
+                    <InfoCard>
+                      <b>1.</b>&nbsp;Copy the above (☝️) link and send it to the
+                      person that sent you here.
+                    </InfoCard>
+                  )}
                 </>
               )}
             </>
@@ -428,11 +430,13 @@ function App() {
       <div className="mt-4">
         {mode === "dec" && (
           <div id="age-decrypter">
-            <InfoCard>
-              <b>2.</b>&nbsp;Paste the text they sent (should start with{" "}
-              <InlineCode>BEGIN AGE</InlineCode>) here. The decrypted message
-              will be output below.
-            </InfoCard>
+            {recieveMode && (
+              <InfoCard>
+                <b>2.</b>&nbsp;Paste the text they sent (should start with{" "}
+                <InlineCode>BEGIN AGE</InlineCode>) here. The decrypted message
+                will be output below.
+              </InfoCard>
+            )}
             <Heading size="medium">decrypt stuff</Heading>
             <p>
               enter some text below to have it decrypted with the generated
