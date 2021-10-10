@@ -188,6 +188,10 @@ function App() {
   const [mode, setMode] = useState<"enc" | "dec">("enc");
   const [pubKey, setPubKey] = useState<string[] | string>(() => {
     const params = new URLSearchParams(global.location.search);
+    if (recieveMode) {
+      // ignore r parameter in receive_mode
+      return "";
+    }
     if (params.has("r")) {
       return params.getAll("r");
     }
@@ -369,6 +373,10 @@ function App() {
                     defaultText="destroy key"
                     confirmText="are you sure you want to destroy the keypair? any encrypted data will be lost!"
                     onConfirm={() => {
+                      if (recieveMode) {
+                        global.location.href = "/";
+                        return;
+                      }
                       setPubKey("");
                       setPrivKey(null);
                       if (mode === "dec") {
@@ -498,7 +506,8 @@ function App() {
           The <InlineCode>?receive_mode=1</InlineCode> query parameter can be
           set and sent as a link to someone so they can have this page set up to
           automatically generate a key and put in decrypt mode, making it easy
-          to send encrypted material to someone.
+          to send encrypted material to someone. (Using this option will cause
+          the <InlineCode>?r=</InlineCode> parameter to be ignored.)
         </p>
         <ExtraSmall></ExtraSmall>
       </div>
