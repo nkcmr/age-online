@@ -368,6 +368,10 @@ function App() {
                     onConfirm={() => {
                       setPubKey("");
                       setPrivKey(null);
+                      if (mode === "dec") {
+                        setPlaintext("");
+                      }
+                      setMode("enc");
                     }}
                   />
                 </small>
