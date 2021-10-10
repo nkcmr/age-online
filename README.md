@@ -7,6 +7,8 @@ a fully in-browser tool to encrypt data with [age](https://age-encryption.org/).
 - [x] MVP: encrypting data
 - [x] decrypting data
 - [ ] make it pretty
+- [ ] encrypt/decrypt files
+- [ ] use github keys (supported by `age`)
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 

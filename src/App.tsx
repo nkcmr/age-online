@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import "./App.css";
+import { ScreenSize, screenSizeToNumber, useScreenSize } from "./useScreenSize";
 import { ageDecrypt, ageEncrypt, ageGenerateX25519Identity } from "./worker";
 
 (global as any).ageEncrypt = ageEncrypt;
@@ -29,6 +29,12 @@ const ResultDiplay: React.FC<React.HTMLAttributes<HTMLPreElement>> = (
 ) => (
   <pre
     className="text-xs mt-3 p-3 bg-gray-200 rounded shadow-inner overflow-scroll"
+    onClick={(e) => {
+      const range = document.createRange();
+      range.selectNode(e.target as Node);
+      window.getSelection()?.removeAllRanges();
+      window.getSelection()?.addRange(range);
+    }}
     {...props}
   ></pre>
 );
@@ -145,15 +151,30 @@ const ConfirmButton: React.FC<{
       );
     case Step.LAST_CHANCE:
       return (
-        <Link
-          className="text-red-500"
-          onClick={() => {
-            setStep(Step.DEFAULT);
-            props.onConfirm();
-          }}
-        >
-          {props.confirmText}
-        </Link>
+        <>
+          <span className="text-red-500 cursor-default">
+            {props.confirmText}
+          </span>
+          <span>&nbsp;—&nbsp;</span>
+          <span
+            className="text-blue-400 cursor-pointer"
+            onClick={() => {
+              setStep(Step.DEFAULT);
+              props.onConfirm();
+            }}
+          >
+            ok
+          </span>
+          <span className="text-gray-400">{" | "}</span>
+          <span
+            className="text-gray-600 cursor-pointer"
+            onClick={() => {
+              setStep(Step.DEFAULT);
+            }}
+          >
+            cancel
+          </span>
+        </>
       );
   }
   throw new Error("unreachable");
@@ -180,7 +201,33 @@ const InlineCode: React.FC<{}> = ({ children }) => (
   </code>
 );
 
+const Textarea: React.FC<
+  React.TextareaHTMLAttributes<HTMLTextAreaElement> & {
+    screenSize: ScreenSize;
+    fontMono?: boolean;
+  }
+> = (props) => {
+  const isSmallScreen =
+    screenSizeToNumber(props.screenSize) <= screenSizeToNumber("sm");
+  var cols = props.cols;
+  if (isSmallScreen) {
+    cols = undefined;
+  }
+  return (
+    <textarea
+      {...props}
+      className={classNames({
+        "border border-gray-400 rounded-sm text-sm p-2 mt-1": true,
+        "font-mono": !!props.fontMono,
+        "w-full": isSmallScreen,
+      })}
+      cols={cols}
+    ></textarea>
+  );
+};
+
 function App() {
+  const screenSize = useScreenSize();
   const [recieveMode] = useState(() => {
     const params = new URLSearchParams(global.location.search);
     return params.has("receive_mode");
@@ -320,8 +367,16 @@ function App() {
             className={classNames({
               "border border-gray-400 rounded-sm text-sm p-2": true,
               "bg-gray-200": pubKeyDisabled,
+              "w-full":
+                screenSizeToNumber(screenSize) <= screenSizeToNumber("sm"),
             })}
-            style={{ width: "510px" }}
+            style={((): React.CSSProperties => {
+              var s: React.CSSProperties = {};
+              if (screenSizeToNumber(screenSize) > screenSizeToNumber("sm")) {
+                s.width = "510px";
+              }
+              return s;
+            })()}
             spellCheck={false}
             autoComplete="off"
             disabled={pubKeyDisabled}
@@ -394,15 +449,29 @@ function App() {
                     send a link with your public key:
                     <br />
                     <input
-                      className="border border-gray-400 rounded-sm text-xs p-2"
+                      className={classNames({
+                        "border border-gray-400 rounded-sm text-xs p-2": true,
+                        "w-full":
+                          screenSizeToNumber(screenSize) <=
+                          screenSizeToNumber("sm"),
+                      })}
                       value={getKeyLink(pubKey)}
                       readOnly={true}
+                      style={((): React.CSSProperties => {
+                        var s: React.CSSProperties = {};
+                        if (
+                          screenSizeToNumber(screenSize) >
+                          screenSizeToNumber("sm")
+                        ) {
+                          s.width = "500px";
+                        }
+                        return s;
+                      })()}
                       onClick={(e) => {
                         // console
                         (e.target as any).focus();
                         (e.target as any).select();
                       }}
-                      style={{ width: "500px" }}
                     />
                   </ExtraSmall>
                   <div className="mb-2"></div>
@@ -453,8 +522,7 @@ function App() {
               enter some text below to have it decrypted with the generated
               private key:
             </p>
-            <textarea
-              className="border border-gray-400 rounded-sm text-sm p-2 mt-1 font-mono	"
+            <Textarea
               value={ciphertext}
               spellCheck="false"
               autoComplete="off"
@@ -463,7 +531,9 @@ function App() {
               onChange={(e) => {
                 setCiphertext(e.target.value);
               }}
-            ></textarea>
+              screenSize={screenSize}
+              fontMono={true}
+            ></Textarea>
             <p className="mt-3">
               below is the decrypted version of the input above:
             </p>
@@ -477,15 +547,15 @@ function App() {
               enter some text below to have it encrypted with the above public
               key:
             </p>
-            <textarea
-              className="border border-gray-400 rounded-sm text-sm p-2 mt-1"
+            <Textarea
               value={plaintext}
               rows={15}
               cols={50}
               onChange={(e) => {
                 setPlaintext(e.target.value);
               }}
-            ></textarea>
+              screenSize={screenSize}
+            ></Textarea>
             <p className="mt-3">
               below is the encrypted version of the input above:
             </p>
