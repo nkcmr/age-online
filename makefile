@@ -1,3 +1,6 @@
+.PHONY: all
+all: public/age.wasm public/sw.js
+
 public/age.wasm: $(wildcard age-wasm/*.go)
 	GOOS=js GOARCH=wasm go build -o $@ ./age-wasm
 

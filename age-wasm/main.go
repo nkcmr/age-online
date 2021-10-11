@@ -73,7 +73,8 @@ func checkArrayElementType(v js.Value, fn func(js.Value) bool) bool {
 func main() {
 	fmt.Println("go initializaing...")
 	// declare function age_generate_x25519_identity(): Promise<[string, string]>
-	js.Global().Set("age_generate_x25519_identity", js.FuncOf(func(_ js.Value, args []js.Value) interface{} {
+	exports := js.Global().Get("Object").New()
+	exports.Set("generate_x25519_identity", js.FuncOf(func(_ js.Value, args []js.Value) interface{} {
 		return promise(
 			func(resolve, reject func(js.Value)) {
 				go func() {
@@ -93,7 +94,7 @@ func main() {
 			},
 		)
 	}))
-	js.Global().Set("age_decrypt", js.FuncOf(func(_ js.Value, args []js.Value) interface{} {
+	exports.Set("decrypt", js.FuncOf(func(_ js.Value, args []js.Value) interface{} {
 		return promise(
 			func(resolve, reject func(js.Value)) {
 				go func() {
@@ -130,7 +131,7 @@ func main() {
 			},
 		)
 	}))
-	js.Global().Set("age_encrypt", js.FuncOf(func(_ js.Value, args []js.Value) interface{} {
+	exports.Set("encrypt", js.FuncOf(func(_ js.Value, args []js.Value) interface{} {
 		return promise(
 			func(resolve, reject func(js.Value)) {
 				go func() {
@@ -185,6 +186,9 @@ func main() {
 			},
 		)
 	}))
+	js.Global().Set("age", exports)
+	js.Global().Get("wasmResolve").Invoke()
+
 	var neverEnding chan struct{}
 	<-neverEnding
 }

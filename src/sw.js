@@ -17,9 +17,13 @@ if (!WebAssembly.instantiateStreaming) {
   };
 }
 
-let wasmResolve;
+global.wasmResolve = false;
 let wasmReady = new Promise(function (resolve) {
-  wasmResolve = resolve;
+  wasmResolve = () => {
+    console.log("go has signaled it is ready");
+    resolve();
+    delete global.wasmResolve;
+  };
 });
 
 const go = new Go();
@@ -28,13 +32,6 @@ WebAssembly.instantiateStreaming(fetch("/age.wasm"), go.importObject).then(
   function (result) {
     console.log("wasm loaded! starting go runtime...");
     go.run(result.instance);
-    const cancelWait = setInterval(() => {
-      console.log("exports from go appear to be set, all ready!");
-      if (global.age_encrypt) {
-        clearInterval(cancelWait);
-        wasmResolve();
-      }
-    }, 50);
   }
 );
 
@@ -43,7 +40,7 @@ self.addEventListener("message", function (event) {
     case "age_generate_x25519_identity":
       wasmReady
         .then(function () {
-          return age_generate_x25519_identity();
+          return age.generate_x25519_identity();
         })
         .then(function (id) {
           self.postMessage({ result: id });
@@ -55,7 +52,7 @@ self.addEventListener("message", function (event) {
     case "age_encrypt":
       wasmReady
         .then(function () {
-          return age_encrypt(event.data.args[0], event.data.args[1]);
+          return age.encrypt(event.data.args[0], event.data.args[1]);
         })
         .then(function (cipherText) {
           self.postMessage({ result: cipherText });
@@ -67,7 +64,7 @@ self.addEventListener("message", function (event) {
     case "age_decrypt":
       wasmReady
         .then(function () {
-          return age_decrypt(event.data.args[0], event.data.args[1]);
+          return age.decrypt(event.data.args[0], event.data.args[1]);
         })
         .then(function (plainText) {
           self.postMessage({ result: plainText });

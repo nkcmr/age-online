@@ -206,22 +206,18 @@ const Textarea: React.FC<
     screenSize: ScreenSize;
     fontMono?: boolean;
   }
-> = (props) => {
+> = ({ screenSize, fontMono, cols, ...props }) => {
   const isSmallScreen =
-    screenSizeToNumber(props.screenSize) <= screenSizeToNumber("sm");
-  var cols = props.cols;
-  if (isSmallScreen) {
-    cols = undefined;
-  }
+    screenSizeToNumber(screenSize) <= screenSizeToNumber("sm");
   return (
     <textarea
       {...props}
       className={classNames({
         "border border-gray-400 rounded-sm text-sm p-2 mt-1": true,
-        "font-mono": !!props.fontMono,
+        "font-mono": !!fontMono,
         "w-full": isSmallScreen,
       })}
-      cols={cols}
+      cols={isSmallScreen ? undefined : cols}
     ></textarea>
   );
 };
@@ -245,6 +241,15 @@ function App() {
     return "";
   });
   const [privKey, setPrivKey] = useState<string | null>(null);
+  useEffect(() => {
+    (global as any).revealAgePrivateKey = () => {
+      return privKey;
+    };
+    return () => {
+      delete (global as any).revealAgePrivateKey;
+    };
+  }, [privKey]);
+  const [ageError, setAgeError] = useState("");
   const [plaintext, setPlaintext] = useState("");
   const [ciphertext, setCiphertext] = useState("");
 
@@ -267,35 +272,30 @@ function App() {
     });
   }, [recieveMode]);
 
+  const [pubKeys, setPubKeys] = useState<string[]>([]);
   useEffect(() => {
-    if (mode === "dec" && ciphertext.charAt(0) === "<") {
-      setCiphertext("");
-    }
-    if (mode === "enc" && plaintext.charAt(0) === "<") {
-      setPlaintext("");
-    }
-  }, [mode]);
-
-  const pubKeys = (() => {
     if (pubKey) {
       if (Array.isArray(pubKey)) {
-        return pubKey;
+        setPubKeys(pubKey);
+      } else {
+        setPubKeys([pubKey]);
       }
-      return [pubKey];
+    } else {
+      setPubKeys([]);
     }
-    return [];
-  })();
+  }, [pubKey]);
 
   useEffect(() => {
     if (mode === "enc") {
       return;
     }
+    setAgeError("");
     if (!privKey) {
       setMode("enc");
       return;
     }
     if (ciphertext === "") {
-      setPlaintext("<nothing to decrypt>");
+      setAgeError("<nothing to decrypt>");
       return;
     }
     ageDecrypt(ciphertext, privKey)
@@ -303,7 +303,7 @@ function App() {
         setPlaintext(pt);
       })
       .catch((e) => {
-        setPlaintext(`ERROR: ${`${e}`.replace(/^(\s*error\s*:\s*)+/gi, "")}`);
+        setAgeError(`ERROR: ${`${e}`.replace(/^(\s*error\s*:\s*)+/gi, "")}`);
       });
   }, [ciphertext, privKey, mode]);
 
@@ -312,12 +312,13 @@ function App() {
     if (mode === "dec") {
       return;
     }
+    setAgeError("");
     if (plaintext === "") {
-      setCiphertext("<nothing to encrypt>");
+      setAgeError("<nothing to encrypt>");
       return;
     }
     if (pubKeys.length === 0) {
-      setCiphertext("<no public key entered>");
+      setAgeError("<no public key entered>");
       return;
     }
     ageEncrypt(plaintext, pubKeys)
@@ -325,9 +326,9 @@ function App() {
         setCiphertext(ct);
       })
       .catch((e) => {
-        setCiphertext(`ERROR: ${`${e}`.replace(/^(\s*error\s*:\s*)+/gi, "")}`);
+        setAgeError(`ERROR: ${`${e}`.replace(/^(\s*error\s*:\s*)+/gi, "")}`);
       });
-  }, [plaintext, pubKey, mode]);
+  }, [plaintext, pubKeys, mode]);
 
   const isPrefilledKey = Array.isArray(pubKey);
   const [pubKeyValue, pubKeyDisabled] = ((): [string, boolean] => {
@@ -537,7 +538,7 @@ function App() {
             <p className="mt-3">
               below is the decrypted version of the input above:
             </p>
-            <ResultDiplay>{plaintext}</ResultDiplay>
+            <ResultDiplay>{ageError || plaintext}</ResultDiplay>
           </div>
         )}
         {mode === "enc" && (
@@ -559,7 +560,7 @@ function App() {
             <p className="mt-3">
               below is the encrypted version of the input above:
             </p>
-            <ResultDiplay>{ciphertext}</ResultDiplay>
+            <ResultDiplay>{ageError || ciphertext}</ResultDiplay>
           </div>
         )}
       </div>
