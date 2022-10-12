@@ -66,12 +66,8 @@ const Link: React.FC<React.AnchorHTMLAttributes<HTMLAnchorElement>> = ({
   );
 };
 
-function evaluate(v: boolean | (() => boolean)): boolean {
-  if (typeof v === "function") {
-    return v();
-  }
-  return v;
-}
+const evaluate = (v: boolean | (() => boolean)): boolean =>
+  typeof v === "function" ? v() : v;
 
 const classNames = (
   options: Record<string, (() => boolean) | boolean>
@@ -298,7 +294,7 @@ function App() {
       setAgeError("<nothing to decrypt>");
       return;
     }
-    ageDecrypt(ciphertext, privKey)
+    ageDecrypt({ ciphertext, privateKey: privKey })
       .then((pt) => {
         setPlaintext(pt);
       })
@@ -321,7 +317,7 @@ function App() {
       setAgeError("<no public key entered>");
       return;
     }
-    ageEncrypt(plaintext, pubKeys)
+    ageEncrypt({ plaintext, recipients: pubKeys })
       .then((ct) => {
         setCiphertext(ct);
       })
@@ -361,10 +357,13 @@ function App() {
         </InfoCard>
       )}
       <div id="age-key">
-        <Heading size="small">public key:</Heading>
+        <Heading size="small">
+          <label htmlFor="public_key">public key:</label>
+        </Heading>
         <div>
           <input
             type="text"
+            id="public_key"
             className={classNames({
               "border border-gray-400 rounded-sm text-sm p-2": true,
               "bg-gray-200": pubKeyDisabled,
@@ -518,12 +517,15 @@ function App() {
                 will be output below.
               </InfoCard>
             )}
-            <Heading size="medium">decrypt stuff</Heading>
+            <Heading size="medium">
+              <label htmlFor="decrypt_stuff">decrypt stuff</label>
+            </Heading>
             <p>
               enter some text below to have it decrypted with the generated
               private key:
             </p>
             <Textarea
+              id="decrypt_stuff"
               value={ciphertext}
               spellCheck="false"
               autoComplete="off"
@@ -543,12 +545,15 @@ function App() {
         )}
         {mode === "enc" && (
           <div id="age-encrypter">
-            <Heading size="medium">encrypt stuff</Heading>
+            <Heading size="medium">
+              <label htmlFor="encrypt_stuff">encrypt stuff</label>
+            </Heading>
             <p>
               enter some text below to have it encrypted with the above public
               key:
             </p>
             <Textarea
+              id="encrypt_stuff"
               value={plaintext}
               rows={15}
               cols={50}
@@ -574,11 +579,15 @@ function App() {
           also be repeated to encrypt for multiple recipients.
         </p>
         <p className="text-sm">
-          The <InlineCode>?receive_mode=1</InlineCode> query parameter can be
-          set and sent as a link to someone so they can have this page set up to
-          automatically generate a key and put in decrypt mode, making it easy
-          to send encrypted material to someone. (Using this option will cause
-          the <InlineCode>?r=</InlineCode> parameter to be ignored.)
+          The{" "}
+          <InlineCode>
+            <a href="/?receive_mode=1">?receive_mode=1</a>
+          </InlineCode>{" "}
+          query parameter can be set and sent as a link to someone so they can
+          have this page set up to automatically generate a key and put in
+          decrypt mode, making it easy to send encrypted material to someone.
+          (Using this option will cause the <InlineCode>?r=</InlineCode>{" "}
+          parameter to be ignored.)
         </p>
         <ExtraSmall></ExtraSmall>
       </div>

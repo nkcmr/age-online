@@ -1,14 +1,29 @@
 var worker = new Worker("/sw.js");
 
-type QueueItem<T> = {
-  op: string;
-  args: any[];
+type Request = GenerateX25519IdentityRequest | EncryptRequest | DecryptRequest;
+
+function unreachable(x: never): void {}
+
+function encodeRequest(r: Request): any {
+  switch (r.op) {
+    case "age_decrypt":
+      return { op: r.op, args: [r.ciphertext, r.privateKey] };
+    case "age_encrypt":
+      return { op: r.op, args: [r.plaintext, r.recipients] };
+    case "age_generate_x25519_identity":
+      return { op: r.op, args: [] };
+  }
+  unreachable(r);
+}
+
+type QueueItem<R extends Request, T> = {
+  request: R;
   resolve?: (value: T | PromiseLike<T>) => void;
   reject?: (reason?: any) => void;
 };
 
 const messageQueue = (() => {
-  const queue: Array<QueueItem<any>> = [];
+  const queue: Array<QueueItem<Request, any>> = [];
   let idleWakeup: (value: void | PromiseLike<void>) => void = () => {};
   function idle() {
     return new Promise<void>((resolve) => {
@@ -46,10 +61,7 @@ const messageQueue = (() => {
         continue;
       }
       const message = waitForMessage();
-      worker.postMessage({
-        op: item.op,
-        args: item.args,
-      });
+      worker.postMessage(encodeRequest(item.request));
       try {
         const reply = await message;
         if (item.resolve) {
@@ -62,37 +74,50 @@ const messageQueue = (() => {
       }
     }
   })();
-  return function enqueue<T>(item: QueueItem<T>): Promise<T> {
+  return function enqueue<Req extends Request, Res>(
+    request: Req
+  ): Promise<Res> {
     return new Promise((resolve, reject) => {
-      queue.push({ ...item, resolve, reject });
+      queue.push({ request, resolve, reject });
       idleWakeup();
     });
   };
 })();
 
+type GenerateX25519IdentityRequest = {
+  op: "age_generate_x25519_identity";
+};
+
 export function ageGenerateX25519Identity(): Promise<[string, string]> {
-  return messageQueue({
+  return messageQueue<GenerateX25519IdentityRequest, [string, string]>({
     op: "age_generate_x25519_identity",
-    args: [],
   });
 }
 
-export function ageEncrypt(
-  plaintext: string,
-  recipients: string[]
-): Promise<string> {
+type EncryptRequest = {
+  op: "age_encrypt";
+  plaintext: string;
+  recipients: string[];
+};
+
+export function ageEncrypt(req: Omit<EncryptRequest, "op">): Promise<string> {
   return messageQueue({
     op: "age_encrypt",
-    args: [plaintext, recipients],
+    plaintext: req.plaintext,
+    recipients: req.recipients,
   });
 }
 
-export function ageDecrypt(
-  ciphertext: string,
-  privateKey: string
-): Promise<string> {
+type DecryptRequest = {
+  op: "age_decrypt";
+  ciphertext: string;
+  privateKey: string;
+};
+
+export function ageDecrypt(req: Omit<DecryptRequest, "op">): Promise<string> {
   return messageQueue({
     op: "age_decrypt",
-    args: [ciphertext, privateKey],
+    ciphertext: req.ciphertext,
+    privateKey: req.privateKey,
   });
 }
