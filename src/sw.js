@@ -17,12 +17,12 @@ if (!WebAssembly.instantiateStreaming) {
   };
 }
 
-global.wasmResolve = false;
+globalThis.wasmResolve = false;
 let wasmReady = new Promise(function (resolve) {
   wasmResolve = () => {
     console.log("go has signaled it is ready");
     resolve();
-    delete global.wasmResolve;
+    delete globalThis.wasmResolve;
   };
 });
 
