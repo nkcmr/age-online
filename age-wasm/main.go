@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"runtime/debug"
 	"strings"
 	"syscall/js"
 
@@ -69,8 +70,24 @@ func checkArrayElementType(v js.Value, fn func(js.Value) bool) bool {
 	return ok
 }
 
+func printAgeVersion() {
+	bi, ok := debug.ReadBuildInfo()
+	if !ok {
+		fmt.Println("printAgeVersion: error: failed to read build info")
+		return
+	}
+	for _, d := range bi.Deps {
+		if d.Path == "filippo.io/age" {
+			fmt.Printf("filippo.io/age: version %s (sum: %s)\n", d.Version, d.Sum)
+			return
+		}
+	}
+	fmt.Println("printAgeVersion: error: did not find filippo.io/age module")
+}
+
 func main() {
 	fmt.Println("go initializaing...")
+	printAgeVersion()
 	// declare function age_generate_x25519_identity(): Promise<[string, string]>
 	exports := js.Global().Get("Object").New()
 	exports.Set("generate_x25519_identity", js.FuncOf(func(_ js.Value, args []js.Value) interface{} {
