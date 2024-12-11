@@ -347,7 +347,7 @@ function App() {
         </Heading>
         <p>easily pass around secure data with age</p>
         <ExtraSmall>
-          (everything is in-browser, powered by WASM, data does not go ANYWHERE)
+          (everything is in-browser, powered by <a target="_blank" rel="noopener noreferrer external" href="https://webassembly.org/">WASM</a>, data does not go ANYWHERE)
         </ExtraSmall>
       </div>
       {recieveMode && (
