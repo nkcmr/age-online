@@ -1,15 +1,19 @@
-import React, { useEffect, useState } from "react";
+import React, {
+  FunctionComponent,
+  PropsWithChildren,
+  useEffect,
+  useState,
+} from "react";
 import { ScreenSize, screenSizeToNumber, useScreenSize } from "./useScreenSize";
 import { ageDecrypt, ageEncrypt, ageGenerateX25519Identity } from "./worker";
 
-(global as any).ageEncrypt = ageEncrypt;
-(global as any).ageDecrypt = ageDecrypt;
-(global as any).ageGenerateX25519Identity = ageGenerateX25519Identity;
+(globalThis as any).ageEncrypt = ageEncrypt;
+(globalThis as any).ageDecrypt = ageDecrypt;
+(globalThis as any).ageGenerateX25519Identity = ageGenerateX25519Identity;
 
-const Heading: React.FC<{ size: "large" | "medium" | "small" }> = ({
-  size,
-  children,
-}) => {
+const Heading: FunctionComponent<
+  PropsWithChildren<{ size: "large" | "medium" | "small" }>
+> = ({ size, children }) => {
   const universalClasses = "";
   switch (size) {
     case "large":
@@ -185,13 +189,13 @@ type KeyPair = {
   private: string;
 };
 
-const InfoCard: React.FC<{}> = ({ children }) => (
+const InfoCard: React.FC<PropsWithChildren> = ({ children }) => (
   <div className="mb-4 p-2 border-blue-300 border rounded bg-blue-100 text-sm">
     {children}
   </div>
 );
 
-const InlineCode: React.FC<{}> = ({ children }) => (
+const InlineCode: React.FC<PropsWithChildren> = ({ children }) => (
   <code className="text-xs bg-gray-100 p-1 rounded-sm border border-gray-300">
     {children}
   </code>
@@ -221,12 +225,12 @@ const Textarea: React.FC<
 function App() {
   const screenSize = useScreenSize();
   const [recieveMode] = useState(() => {
-    const params = new URLSearchParams(global.location.search);
+    const params = new URLSearchParams(globalThis.location.search);
     return params.has("receive_mode");
   });
   const [mode, setMode] = useState<"enc" | "dec">("enc");
   const [pubKey, setPubKey] = useState<string[] | string>(() => {
-    const params = new URLSearchParams(global.location.search);
+    const params = new URLSearchParams(globalThis.location.search);
     if (recieveMode) {
       // ignore r parameter in receive_mode
       return "";
@@ -238,11 +242,11 @@ function App() {
   });
   const [privKey, setPrivKey] = useState<string | null>(null);
   useEffect(() => {
-    (global as any).revealAgePrivateKey = () => {
+    (globalThis as any).revealAgePrivateKey = () => {
       return privKey;
     };
     return () => {
-      delete (global as any).revealAgePrivateKey;
+      delete (globalThis as any).revealAgePrivateKey;
     };
   }, [privKey]);
   const [ageError, setAgeError] = useState("");
@@ -429,7 +433,7 @@ function App() {
                     confirmText="are you sure you want to destroy the keypair? any encrypted data will be lost!"
                     onConfirm={() => {
                       if (recieveMode) {
-                        global.location.href = "/";
+                        globalThis.location.href = "/";
                         return;
                       }
                       setPubKey("");
