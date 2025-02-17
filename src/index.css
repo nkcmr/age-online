@@ -12,6 +12,7 @@ code {
     monospace;
 } */
 
-@tailwind base;
+@import "tailwindcss";
+/* @tailwind base;
 @tailwind components;
-@tailwind utilities;
+@tailwind utilities; */
