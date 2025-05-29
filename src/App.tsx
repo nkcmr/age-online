@@ -4,8 +4,14 @@ import React, {
   useEffect,
   useState,
 } from "react";
+import { typeageImplementation } from "./age";
 import { ScreenSize, screenSizeToNumber, useScreenSize } from "./useScreenSize";
-import { ageDecrypt, ageEncrypt, ageGenerateX25519Identity } from "./worker";
+
+const {
+  encrypt: ageEncrypt,
+  decrypt: ageDecrypt,
+  generateIdentity: ageGenerateX25519Identity,
+} = typeageImplementation;
 
 (globalThis as any).ageEncrypt = ageEncrypt;
 (globalThis as any).ageDecrypt = ageDecrypt;
@@ -351,7 +357,15 @@ function App() {
         </Heading>
         <p>easily pass around secure data with age</p>
         <ExtraSmall>
-          (everything is in-browser, powered by <a target="_blank" rel="noopener noreferrer external" href="https://webassembly.org/">WASM</a>, data does not go ANYWHERE)
+          (everything is in-browser, powered by{" "}
+          <a
+            target="_blank"
+            rel="noopener noreferrer external"
+            href="https://github.com/FiloSottile/typage/"
+          >
+            typage
+          </a>
+          , data does not go ANYWHERE)
         </ExtraSmall>
       </div>
       {recieveMode && (
@@ -408,15 +422,15 @@ function App() {
                     {!privKey && (
                       <small>
                         <Link
-                          onClick={() => {
-                            ageGenerateX25519Identity().then((pair) => {
-                              var newkp: KeyPair = {
-                                public: pair[1],
-                                private: pair[0],
-                              };
-                              setPubKey(newkp.public);
-                              setPrivKey(newkp.private);
-                            });
+                          onClick={async () => {
+                            try {
+                              const [keyPriv, keyPub] =
+                                await ageGenerateX25519Identity();
+                              setPubKey(keyPub);
+                              setPrivKey(keyPriv);
+                            } catch (e) {
+                              console.error({ e });
+                            }
                           }}
                         >
                           generate public/private key pair

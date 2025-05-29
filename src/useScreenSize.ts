@@ -22,15 +22,16 @@ export function useScreenSize(): ScreenSize {
 
   useEffect(() => {
     const handleResize = () => {
-      if (getScreenSize() !== screenSize) {
-        setScreenSize(getScreenSize());
+      const newScreenSize = getScreenSize();
+      if (newScreenSize !== screenSize) {
+        setScreenSize(newScreenSize);
       }
     };
     window.addEventListener("resize", handleResize);
     return () => {
       window.removeEventListener("resize", handleResize);
     };
-  });
+  }, [screenSize, setScreenSize]);
 
   return screenSize;
 }
