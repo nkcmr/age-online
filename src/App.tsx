@@ -28,7 +28,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   h1: { fontSize: "1.75rem", fontWeight: 700, margin: "0 0 0.25rem" },
   h2: { fontSize: "1.1rem", fontWeight: 600, margin: "0 0 0.5rem" },
-  muted: { fontSize: 12, color: "#666" },
+  muted: { fontSize: 12, color: "#595959" },
   card: {
     border: "1px solid #e0e0e0",
     borderRadius: 8,
@@ -46,7 +46,7 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: 14,
     fontFamily: "monospace",
   },
-  inputDisabled: { background: "#f5f5f5", color: "#888" },
+  inputDisabled: { background: "#f5f5f5", color: "#595959" },
   textarea: {
     display: "block",
     width: "100%",
@@ -68,8 +68,8 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: 13,
   },
   label: { display: "block", fontWeight: 500, marginBottom: "0.3rem" },
-  link: { color: "#1677ff", cursor: "pointer", textDecoration: "none" },
-  linkDanger: { color: "#cf1322", cursor: "pointer" },
+  link: { color: "#0050b3", cursor: "pointer", textDecoration: "none" },
+  linkDanger: { color: "#a8071a", cursor: "pointer" },
   code: {
     fontFamily: "monospace",
     background: "#f5f5f5",
@@ -92,7 +92,7 @@ const s: Record<string, React.CSSProperties> = {
     cursor: "pointer",
     fontSize: 14,
   },
-  segBtnActive: { background: "#1677ff", color: "#fff" },
+  segBtnActive: { background: "#0050b3", color: "#fff" },
   hr: { border: "none", borderTop: "1px solid #e0e0e0", margin: "0 0 1.25rem" },
   mt: { marginTop: "0.5rem" },
   mb: { marginBottom: "0.5rem" },
@@ -203,7 +203,7 @@ function App() {
   }
 
   return (
-    <div style={s.page}>
+    <main style={s.page}>
       {/* Header */}
       <div style={{ marginBottom: "1.5rem" }}>
         <h1 style={s.h1}>
@@ -313,7 +313,7 @@ function App() {
                   </a>
                   {" | "}
                   <a
-                    style={{ ...s.link, color: "#888" }}
+                    style={{ ...s.link, color: "#595959" }}
                     onClick={() => setConfirmDestroy(false)}
                   >
                     cancel
@@ -479,7 +479,7 @@ function App() {
       </div>
 
       {/* Footer */}
-      <div style={{ fontSize: 12, color: "#888", lineHeight: 1.8 }}>
+      <div style={{ fontSize: 12, color: "#595959", lineHeight: 1.8 }}>
         <a
           href="https://github.com/nkcmr/age-online"
           target="_blank"
@@ -499,7 +499,7 @@ function App() {
           cloudflare pages
         </a>
       </div>
-    </div>
+    </main>
   );
 }
 
