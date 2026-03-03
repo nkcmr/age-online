@@ -1,3 +1,8 @@
 body {
   margin: 0;
+  background: #fff;
+}
+
+[data-theme="dark"] body {
+  background: #0d1117;
 }
