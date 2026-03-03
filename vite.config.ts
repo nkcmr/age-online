@@ -1,13 +1,17 @@
 import preact from "@preact/preset-vite";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { defineConfig } from "vite";
+
+const certExists = existsSync("./age-online-dev.localhost.pem");
 
 export default defineConfig({
   plugins: [preact()],
-  server: {
-    https: {
-      cert: readFileSync("./age-online-dev.localhost.pem"),
-      key: readFileSync("./age-online-dev.localhost-key.pem"),
-    },
-  },
+  server: certExists
+    ? {
+        https: {
+          cert: readFileSync("./age-online-dev.localhost.pem"),
+          key: readFileSync("./age-online-dev.localhost-key.pem"),
+        },
+      }
+    : {},
 });
