@@ -35,9 +35,5 @@
   "dependencies": {
     "age-encryption": "^0.2.4",
     "preact": "^10.28.4"
-  },
-  "volta": {
-    "node": "24.1.0",
-    "yarn": "3.8.7"
   }
 }
