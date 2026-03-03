@@ -27,17 +27,14 @@
     ]
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.1.8",
-    "@types/react": "^19.1.6",
-    "@types/react-dom": "^19.1.5",
-    "@vitejs/plugin-react": "^4.5.0",
-    "vite": "^6.3.5"
+    "@preact/preset-vite": "^2.10.3",
+    "@types/react": "npm:@preact/compat@^18.3.2",
+    "@types/react-dom": "npm:@preact/compat@^18.3.2",
+    "vite": "^7.3.1"
   },
   "dependencies": {
-    "age-encryption": "^0.2.3",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "tailwindcss": "^4.1.8"
+    "age-encryption": "^0.2.4",
+    "preact": "^10.28.4"
   },
   "volta": {
     "node": "24.1.0",
