@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       age-encryption:
-        specifier: ^0.2.4
-        version: 0.2.4
+        specifier: ^0.3.0
+        version: 0.3.0
       preact:
         specifier: ^10.28.4
         version: 10.28.4
@@ -295,17 +295,21 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@noble/ciphers@1.3.0':
-    resolution: {integrity: sha512-2I0gnIVPtfnMw9ee9h1dJG7tp81+8Ob3OJb3Mv37rx5L40/b0i7djjCVvGOVqc9AEIQyvyu1i6ypKdFw8R8gQw==}
-    engines: {node: ^14.21.3 || >=16}
+  '@noble/ciphers@2.1.1':
+    resolution: {integrity: sha512-bysYuiVfhxNJuldNXlFEitTVdNnYUc+XNJZd7Qm2a5j1vZHgY+fazadNFWFaMK/2vye0JVlxV3gHmC0WDfAOQw==}
+    engines: {node: '>= 20.19.0'}
 
-  '@noble/curves@1.9.1':
-    resolution: {integrity: sha512-k11yZxZg+t+gWvBbIswW0yoJlu8cHOC7dhunwOzoWH/mXGBiYyR4YY6hAEK/3EUs4UpB8la1RfdRpeGsFHkWsA==}
-    engines: {node: ^14.21.3 || >=16}
+  '@noble/curves@2.0.1':
+    resolution: {integrity: sha512-vs1Az2OOTBiP4q0pwjW5aF0xp9n4MxVrmkFBxc6EKZc6ddYx5gaZiAsZoq0uRRXWbi3AT/sBqn05eRPtn1JCPw==}
+    engines: {node: '>= 20.19.0'}
 
-  '@noble/hashes@1.8.0':
-    resolution: {integrity: sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A==}
-    engines: {node: ^14.21.3 || >=16}
+  '@noble/hashes@2.0.1':
+    resolution: {integrity: sha512-XlOlEbQcE9fmuXxrVTXCTlG2nlRXa9Rj3rr5Ue/+tX+nmkgbX720YHh0VR3hBF9xDvwnb8D2shVGOwNx+ulArw==}
+    engines: {node: '>= 20.19.0'}
+
+  '@noble/post-quantum@0.5.4':
+    resolution: {integrity: sha512-leww0zzIirrvwaYMPI9fj6aRIlA/c6Y0/lifQQ1YOOyHEr0MNH3yYpjXeiVG+tWdPps4XxGclFWX2INPO3Yo5w==}
+    engines: {node: '>= 20.19.0'}
 
   '@preact/compat@18.3.2':
     resolution: {integrity: sha512-5vSl55K5yLMvocT7PBKxDOHGgYPjMrKQqqr6roSNjIXcJOtSgDDMjpiCAF3s7klRdmGrN75b/Przmjw8gmlg/w==}
@@ -486,14 +490,14 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@scure/base@1.2.5':
-    resolution: {integrity: sha512-9rE6EOVeIQzt5TSu4v+K523F8u6DhBsoZWPGKlnCshhlDhy0kJzUX4V+tr2dWmzF1GdekvThABoEQBGBQI7xZw==}
+  '@scure/base@2.0.0':
+    resolution: {integrity: sha512-3E1kpuZginKkek01ovG8krQ0Z44E3DHPjc5S2rjJw9lZn3KSQOs8S7wqikF/AH7iRanHypj85uGyxk0XAyC37w==}
 
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
 
-  age-encryption@0.2.4:
-    resolution: {integrity: sha512-9STi5PzVCn3YZurHLMI2njLwCT4ACkHFoktp1JNyFF0m4qHSn9JZQB8nnnJnpEGEJZduVBL1oxZzr4lteqRbzw==}
+  age-encryption@0.3.0:
+    resolution: {integrity: sha512-vDhGGp5ZXpbKL6oc3FEBjGhyepr/0SwIWmia6CcPXvYcxGBSQNcDdMv9m2yVOkjjYuJEmtGEhOojIUcjrj0cEw==}
 
   babel-plugin-transform-hook-names@1.0.2:
     resolution: {integrity: sha512-5gafyjyyBTTdX/tQQ0hRgu4AhNHG/hqWi0ZZmg2xvs2FgRkJXzDNKBZCyoYqgFkovfDrgM8OoKg8karoUvWeCw==}
@@ -1038,13 +1042,18 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@noble/ciphers@1.3.0': {}
+  '@noble/ciphers@2.1.1': {}
 
-  '@noble/curves@1.9.1':
+  '@noble/curves@2.0.1':
     dependencies:
-      '@noble/hashes': 1.8.0
+      '@noble/hashes': 2.0.1
 
-  '@noble/hashes@1.8.0': {}
+  '@noble/hashes@2.0.1': {}
+
+  '@noble/post-quantum@0.5.4':
+    dependencies:
+      '@noble/curves': 2.0.1
+      '@noble/hashes': 2.0.1
 
   '@preact/compat@18.3.2(preact@10.28.4)':
     dependencies:
@@ -1175,16 +1184,17 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.59.0':
     optional: true
 
-  '@scure/base@1.2.5': {}
+  '@scure/base@2.0.0': {}
 
   '@types/estree@1.0.8': {}
 
-  age-encryption@0.2.4:
+  age-encryption@0.3.0:
     dependencies:
-      '@noble/ciphers': 1.3.0
-      '@noble/curves': 1.9.1
-      '@noble/hashes': 1.8.0
-      '@scure/base': 1.2.5
+      '@noble/ciphers': 2.1.1
+      '@noble/curves': 2.0.1
+      '@noble/hashes': 2.0.1
+      '@noble/post-quantum': 0.5.4
+      '@scure/base': 2.0.0
 
   babel-plugin-transform-hook-names@1.0.2(@babel/core@7.29.0):
     dependencies:
