@@ -12,7 +12,7 @@ const {
 (globalThis as any).ageGenerateX25519Identity = ageGenerateX25519Identity;
 
 const getKeyLink = (key: string): string => {
-  return `https://age-online.com/?r=${key}`;
+  return `https://age-online.nkcmr.dev/?r=${key}`;
 };
 
 type KeyPair = { public: string; private: string };
